@@ -19,6 +19,11 @@ var bridge = require(__dirname + '/../'),
         alias: 'delay',
         description: 'ms of artical latency',
         default: 0
+      },
+      c: {
+        alias: 'ctl',
+        description: 'rest api for remote control',
+        default: 'localhost:27019'
       }
     });
 
