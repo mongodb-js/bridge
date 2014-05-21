@@ -1,6 +1,6 @@
 {
   "name": "mongodb-bridge",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "a tiny tcp proxy for network simulation (same as mongobridge.cpp)",
   "bin": {
     "mongodb-bridge": "bin/mongodb-bridge.js"
