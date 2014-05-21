@@ -2,17 +2,11 @@
   "name": "mongodb-bridge",
   "version": "0.0.1",
   "description": "a tiny tcp proxy for network simulation (same as mongobridge.cpp)",
-  "scripts": {
-    "test": "mocha"
-  },
   "bin": {
     "mongobridge": "./bin/mongobridge.js"
   },
   "dependencies": {
     "debug": "^0.7.4"
-  },
-  "devDependencies": {
-    "mocha": "^1.17.1"
   },
   "keywords": [
     "mongodb",
