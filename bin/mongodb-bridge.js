@@ -29,4 +29,9 @@ var bridge = require(__dirname + '/../'),
 
 if(yargs.argv.help || yargs.argv.h) return yargs.showHelp();
 
-bridge(yargs.argv);
+if(yargs._[0] === 'ctl'){
+
+}
+else {
+  bridge(yargs.argv);
+}

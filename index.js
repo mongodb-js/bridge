@@ -37,12 +37,9 @@ module.exports = function(opts){
         you.end();
       });
   }).listen(from[0], from[1], function(){
-    console.log('   ');
-    console.log('   make your application connect to', hostport(from));
-    console.log('   ');
-    console.log('   @todo: make this better');
-    console.log('   @todo: add details on testing mongo against network failure scenarios.');
-    console.log('   ');
+    console.log('');
+    console.log('   waiting for connections on', hostport(from));
+    console.log('');
   });
 
   http.createServer(function (req, res){
@@ -77,16 +74,25 @@ module.exports = function(opts){
       return res.end('allowing packets as usual');
     }
     res.writeHead(404, {'Content-Type': 'text/plain'});
-
     res.end('huh?');
   }).listen(ctl[0], ctl[1], function(){
-    console.log('    control mongobridge via REST!  to simulate:');
-    console.log('    100ms network delay `curl http://'+hostport(ctl)+'/delay/100`');
-    console.log('    nothing in or out `curl http://'+hostport(ctl)+'/drop/all`');
-    console.log('    nothing in `curl http://'+hostport(ctl)+'/drop/incoming`');
-    console.log('    nothing out `curl http://'+hostport(ctl)+'/drop/outgoing`');
-    console.log('    back to normal `curl http://'+hostport(ctl)+'/drop/none`');
-    console.log('    ');
+    console.log('    control mongobridge with rest to simulate:');
+    console.log('');
+    console.log('    100ms network delay');
+    console.log('     curl http://'+hostport(ctl)+'/delay/100');
+    console.log('');
+    console.log('    nothing in');
+    console.log('      curl http://'+hostport(ctl)+'/drop/incoming');
+    console.log('');
+    console.log('    nothing out');
+    console.log('      curl http://'+hostport(ctl)+'/drop/outgoing');
+    console.log('');
+    console.log('    nothing in or out');
+    console.log('      curl http://'+hostport(ctl)+'/drop/all');
+    console.log('');
+    console.log('    back to normal');
+    console.log('      curl http://'+hostport(ctl)+'/drop/none');
+    console.log('');
   });
   srv.delay = opts.delay || 0;
   srv.drop_outgoing = false;
