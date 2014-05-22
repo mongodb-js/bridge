@@ -65,18 +65,23 @@ curl http://localhost:27019/delay/570000
 
 # Let's go back to no delay.
 curl http://localhost:27019/delay/0
+
+# How about another common scenario: someone screwed up the iptables config.
+# Hmm I can send but I never get anything back from mongo...
+curl http://localhost:27019/drop/outgoing
+
+# Whew!  Ok that's fixed.
+curl http://localhost:27019/drop/none;
+
+# Now let's update the app servers...
+curl http://localhost:27019/drop/incoming;
+
+# Nards!  Let me see that thing.  I remember how to ip all the tables...
+curl http://localhost:27019/drop/all;
+
+# Oi... we forgot to run chef-client.
+curl http://localhost:27019/drop/none;
 ```
-
-## Simulating Network Paritions
-
-Until i get over the flu, see
-[this post](http://www.kchodorow.com/blog/2011/04/20/simulating-network-paritions-with-mongobridge/)
-for the mongo bits.  REST API's for controlling traffic:
-
-- nothing in or out `curl http://'+hostport(ctl)+'/drop/all`
-- nothing in `curl http://'+hostport(ctl)+'/drop/incoming`
-- nothing out `curl http://'+hostport(ctl)+'/drop/outgoing`
-- back to normal `curl http://'+hostport(ctl)+'/drop/none`
 
 ## Driving (wip)
 
