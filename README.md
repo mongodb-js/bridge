@@ -83,6 +83,27 @@ curl http://localhost:27019/drop/all;
 curl http://localhost:27019/drop/none;
 ```
 
+don't like using curl?
+
+```javascript
+var bridge = require('bridge').client('localhost:27019');
+bridge.delay(1);
+
+bridge.delay(100);
+
+bridge.delay(0);
+
+bridge.drop('incoming');
+
+bridge.drop('outgoing');
+
+bridge.drop('all');
+
+bridge.drop('none');
+
+bridge.stop();
+```
+
 ## Driving (wip)
 
 ```
@@ -90,9 +111,10 @@ cat > one_minute_slowdown.txt << EOF
 set the delay to 0
 and after 5 minutes, set the delay to 100
 and after 1 minute, set the delay to 0
+and then stop
 EOF
 
-cat one_minute_slowdown.txt | mongodb-bridge-ctl
+cat one_minute_slowdown.txt | mongodb-bridge ctl
 ```
 
 ```
@@ -101,10 +123,10 @@ set the delay to 0
 and after 10 seconds, block outgoing
 and after 30 seconds, unblock outgoing
 and set the delay to 0
-and after 30 seconds, drop 10% of incoming
+and then stop
 EOF
 
-cat drop_outgoing_then_lose_some_incoming.txt | mongodb-bridge-ctl
+cat drop_outgoing_then_lose_some_incoming.txt | mongodb-bridge ctl
 ```
 
 ## todo
