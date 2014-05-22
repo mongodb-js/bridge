@@ -2,6 +2,7 @@
 
 process.env.DEBUG='*';
 var bridge = require(__dirname + '/../'),
+  os = require('os'),
   yargs = require('yargs')
     .usage('Just a tcp proxy to use when testing mongodb.\nUsage: $0 --from [hostname:port] --to [hostname:port]')
     .options({
@@ -29,8 +30,18 @@ var bridge = require(__dirname + '/../'),
 
 if(yargs.argv.help || yargs.argv.h) return yargs.showHelp();
 
-if(yargs._[0] === 'ctl'){
+if(yargs.argv._[0] === 'run-scenario'){
+  var steps = '';
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('readable', function() {
+    var msg = process.stdin.read();
+    if(msg) steps += msg;
+  });
 
+  process.stdin.on('end', function(){
+    steps = steps.split(os.EOL).filter(function(s){return s.length > 0;});
+    bridge.runScenario(steps);
+  });
 }
 else {
   bridge(yargs.argv);

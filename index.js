@@ -51,12 +51,14 @@ module.exports = function(opts){
     }
 
     if(r.pathname === '/drop/incoming'){
+      srv.drop_outgoing = false;
       console.log('drop incoming', (srv.drop_incoming = true));
       res.writeHead(200, {'Content-Type': 'text/plain'});
       return res.end('dropping incoming socket writes');
     }
 
     if(r.pathname === '/drop/outgoing'){
+      srv.drop_incoming = false;
       console.log('drop outgoing', (srv.drop_outgoing = true));
       res.writeHead(200, {'Content-Type': 'text/plain'});
       return res.end('dropping outgoing socket writes');
@@ -107,9 +109,50 @@ module.exports = function(opts){
   return srv;
 };
 
-module.exports.ctl = function(todo){
-  var action = todo.pop();
-  console.log(action);
+module.exports.runScenario = function(steps, hostport){
+  var client = module.exports.client(hostport);
+
+  function step(){
+    if(steps.length === 0){
+      return console.log('done');
+    }
+
+    var msg = steps.pop(), matches, ms;
+    if((matches = /(?:and )?set (?:the )?delay to (\d+)/.exec(msg))){
+      console.log('setting delay to', matches[1]);
+      client.delay(matches[1], function(err){
+        if(err) throw err;
+        step();
+      });
+    }
+    else if((matches = /(?:and )?(?:then )?stop/.test(msg))){
+      client.stop(function(err){
+        if(err) throw err;
+        step();
+      });
+    }
+    else if((matches = /(?:and )?after (\d+) (second|minute|m)s?, drop (outgoing|incoming|all|none)/.exec(msg))){
+      ms = (matches[2] === 'second') ? (matches[1]*1000) :
+        (matches[2] === 'minute') ? (matches[1]*60*1000) : matches[1];
+      console.log('waiting ' + ms + 'ms to start dropping ' + matches[3]);
+      setTimeout(function(){
+        client.drop(matches[3], function(err){
+          if(err) throw err;
+          step();
+        });
+      }, ms);
+    }
+    else if((matches = /(?:and )?(?:then )?wait (\d+) (second|minute|m)s?/.exec(msg))){
+      ms = (matches[2] === 'second') ? (matches[1]*1000) :
+        (matches[2] === 'minute') ? (matches[1]*60*1000) : matches[1];
+      console.log('waiting ' + ms + 'ms');
+      setTimeout(function(){step();}, ms);
+    }
+    else {
+      throw new Error('What is this? `'+msg+'`');
+    }
+  }
+  step();
 };
 
 // Get a client to control a bridge.
