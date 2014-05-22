@@ -25,25 +25,46 @@ A teeny rest api will also be lauched to tweak response delay in milliseconds
 (0 by default) on `localhost:27019`.
 
 ```
-# ec2 west -> tokyo
-curl http://localhost:27019/delay/1100
+# Start a mongod in terminal 1
+mongod --port 27018;
 
-# ec2 west -> EU ~180ms
-curl http://localhost:27019/delay/180
+# Start a bridge in terminal 2
+mongodb-bridge --from localhost:27017 --to localhost:27018
 
-# ec2 east -> EU ~100ms
-curl http://localhost:27019/delay/100
+# Open mongo shell in terminal 3
+mongo localhost:27017
 
-# ec2 east -> west ~40ms
-curl http://localhost:27019/delay/40
-
-# ec2 same AZ flappy ~1ms
+# When you run `show dbs` everything looks fine.
+# Let's simulate the some delay though.
+# Open terminal 4.
+# What if you're connecting to another ec2 instance in the same availability zone? ~1ms
 curl http://localhost:27019/delay/1
 
+# Not a realy noticable difference.
+# How about from ec2 east -> west? ~40ms
+curl http://localhost:27019/delay/40
+
+# How about ec2 east (virginia) -> EU (dublin)? ~100ms
+curl http://localhost:27019/delay/100
+
+# Now we're starting to notice.
+# How about from ec2 west (oregon) -> EU (dublin)? ~180ms
+curl http://localhost:27019/delay/180
+
+# Ok starting to hurt.
+# How about ec2 west -> tokyo? ~1100ms
+curl http://localhost:27019/delay/1100
+
+# Zoinks.  How about some weirdness.
 # mongodb running on a satellite ~2200ms
 curl http://localhost:27019/delay/2200
 
-# @see https://amplab.cs.berkeley.edu/2011/10/20/latencies-gone-wild/
+# Even at that, not so bad.  Lots of people can do that.
+# What about mars, tough guy? ~9 minutes and 30 seconds
+curl http://localhost:27019/delay/570000
+
+# Let's go back to no delay.
+curl http://localhost:27019/delay/0
 ```
 
 ## Simulating Network Paritions
@@ -56,6 +77,30 @@ for the mongo bits.  REST API's for controlling traffic:
 - nothing in `curl http://'+hostport(ctl)+'/drop/incoming`
 - nothing out `curl http://'+hostport(ctl)+'/drop/outgoing`
 - back to normal `curl http://'+hostport(ctl)+'/drop/none`
+
+## Driving (wip)
+
+```
+cat > one_minute_slowdown.txt << EOF
+set the delay to 0
+and after 5 minutes, set the delay to 100
+and after 1 minute, set the delay to 0
+EOF
+
+cat one_minute_slowdown.txt | mongodb-bridge-ctl
+```
+
+```
+cat > drop_outgoing_then_lose_some_incoming.txt << EOF
+set the delay to 0
+and after 10 seconds, block outgoing
+and after 30 seconds, unblock outgoing
+and set the delay to 0
+and after 30 seconds, drop 10% of incoming
+EOF
+
+cat drop_outgoing_then_lose_some_incoming.txt | mongodb-bridge-ctl
+```
 
 ## todo
 
