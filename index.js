@@ -1,5 +1,6 @@
 var net = require('net'),
-  http = require('http');
+  http = require('http'),
+  debug = require('debug')('moongodb-bridge');
 
 // @option {String, default: localhost:27017} from Take packets from this
 // @option {String, default: localhost:27018} to And send em to this
@@ -31,76 +32,65 @@ module.exports = function(opts){
         you.end();
       });
   }).listen(from[0], from[1], function(){
-    console.log('');
-    console.log('   waiting for connections on', hostport(from));
-    console.log('');
+    debug('☁︎  ⇄ ' + hostport(from) + ' ⇄  ' + hostport(to) + '. ℹ︎ http://'+hostport(ctl)+'/ ℹ︎');
   });
 
   http.createServer(function (req, res){
     var r = require('url').parse(req.url), matches;
-    if((matches = /\/delay\/(\d+)/.exec(r.pathname))){
-      console.log('delay is now', (srv.delay = parseInt(matches[1], 10)), 'ms');
-      res.writeHead(200, {'Content-Type': 'text/plain'});
-      return res.end('delay = ' + srv.delay);
+    if(r.pathname === '/'){
+      return respond(res, {
+        delay: srv.delay,
+        drop: {
+          outgoing: srv.drop_outgoing,
+          incoming: srv.drop_incoming,
+          all: srv.drop_all,
+        },
+        from: hostport(from),
+        to: hostport(to),
+        ctl: hostport(ctl)
+      });
     }
 
+    if((matches = /\/delay\/(\d+)/.exec(r.pathname))){
+      srv.delay = parseInt(matches[1], 10);
+      debug('set delay', srv.delay);
+      return respond(res, 'delay set to ' + srv.delay + 'ms');
+    }
     if(r.pathname === '/drop/all'){
-      console.log('drop all', (srv.drop_all = true));
-      res.writeHead(200, {'Content-Type': 'text/plain'});
-      return res.end('dropping all socket writes');
+      srv.drop_all = true;
+      debug('drop all');
+      return respond(res, 'dropping all socket writes');
     }
 
     if(r.pathname === '/drop/incoming'){
       srv.drop_outgoing = false;
-      console.log('drop incoming', (srv.drop_incoming = true));
-      res.writeHead(200, {'Content-Type': 'text/plain'});
-      return res.end('dropping incoming socket writes');
+      srv.drop_incoming = true;
+      debug('drop incoming');
+      return respond(res, 'dropping incoming socket writes');
     }
 
     if(r.pathname === '/drop/outgoing'){
       srv.drop_incoming = false;
-      console.log('drop outgoing', (srv.drop_outgoing = true));
-      res.writeHead(200, {'Content-Type': 'text/plain'});
-      return res.end('dropping outgoing socket writes');
+      srv.drop_outgoing = true;
+      debug('drop outgoing');
+      return respond(res, 'dropping outgoing socket writes');
     }
 
     if(r.pathname === '/drop/none'){
       srv.drop_outgoing = srv.drop_incoming = srv.drop_all = false;
-      res.writeHead(200, {'Content-Type': 'text/plain'});
-      return res.end('allowing packets as usual');
+      debug('drop none');
+      return respond(res, 'allowing packets as usual');
     }
 
     if(r.pathname === '/stop'){
-      res.writeHead(200, {'Content-Type': 'text/plain'});
-      res.end('goodbye');
+      debug('stop bridge');
+      respond(res, 'Goodbye');
       return process.nextTick(function(){
         process.exit(0);
       });
     }
-    res.writeHead(404, {'Content-Type': 'text/plain'});
-    res.end('huh?');
-  }).listen(ctl[0], ctl[1], function(){
-    console.log('    control mongobridge with rest to simulate:');
-    console.log('');
-    console.log('    100ms network delay');
-    console.log('     curl http://'+hostport(ctl)+'/delay/100');
-    console.log('');
-    console.log('    nothing in');
-    console.log('      curl http://'+hostport(ctl)+'/drop/incoming');
-    console.log('');
-    console.log('    nothing out');
-    console.log('      curl http://'+hostport(ctl)+'/drop/outgoing');
-    console.log('');
-    console.log('    nothing in or out');
-    console.log('      curl http://'+hostport(ctl)+'/drop/all');
-    console.log('');
-    console.log('    back to normal');
-    console.log('      curl http://'+hostport(ctl)+'/drop/none');
-    console.log('');
-    console.log('    when you\'re test is complete or an assert fails, stop like so');
-    console.log('      curl http://'+hostport(ctl)+'/stop');
-    console.log('');
-  });
+    respond(res, 'Unknown path', 404);
+  }).listen(ctl[0], ctl[1]);
   srv.delay = opts.delay || 0;
   srv.drop_outgoing = false;
   srv.drop_incoming = false;
@@ -109,17 +99,25 @@ module.exports = function(opts){
   return srv;
 };
 
+function respond(res, data, code){
+  if(typeof data === 'string'){
+    data = {message: data};
+  }
+  res.writeHead((code || 200), {'Content-Type': 'application/json'});
+  res.end(JSON.stringify(data, null, 2));
+}
+
 module.exports.runScenario = function(steps, hostport){
   var client = module.exports.client(hostport);
 
   function step(){
     if(steps.length === 0){
-      return console.log('done');
+      return debug('done');
     }
 
     var msg = steps.pop(), matches, ms;
     if((matches = /(?:and )?set (?:the )?delay to (\d+)/.exec(msg))){
-      console.log('setting delay to', matches[1]);
+      debug('setting delay to', matches[1]);
       client.delay(matches[1], function(err){
         if(err) throw err;
         step();
@@ -134,7 +132,7 @@ module.exports.runScenario = function(steps, hostport){
     else if((matches = /(?:and )?after (\d+) (second|minute|m)s?, drop (outgoing|incoming|all|none)/.exec(msg))){
       ms = (matches[2] === 'second') ? (matches[1]*1000) :
         (matches[2] === 'minute') ? (matches[1]*60*1000) : matches[1];
-      console.log('waiting ' + ms + 'ms to start dropping ' + matches[3]);
+      debug('waiting ' + ms + 'ms to start dropping ' + matches[3]);
       setTimeout(function(){
         client.drop(matches[3], function(err){
           if(err) throw err;
@@ -145,7 +143,7 @@ module.exports.runScenario = function(steps, hostport){
     else if((matches = /(?:and )?(?:then )?wait (\d+) (second|minute|m)s?/.exec(msg))){
       ms = (matches[2] === 'second') ? (matches[1]*1000) :
         (matches[2] === 'minute') ? (matches[1]*60*1000) : matches[1];
-      console.log('waiting ' + ms + 'ms');
+      debug('waiting ' + ms + 'ms');
       setTimeout(function(){step();}, ms);
     }
     else {
@@ -177,7 +175,7 @@ function Client(hostport){
 // @api private
 var noop = function(err, data){
   if(err) throw err;
-  console.log(data);
+  debug(data);
 };
 
 Client.prototype.stop = function(fn){
@@ -222,7 +220,7 @@ Client.prototype.drop = function(what, fn){
 Client.prototype.exec = function(path, fn){
   fn = fn || noop;
   this.opts.path = path;
-  console.log(this.opts);
+  debug(this.opts);
   http.request(this.opts, function(res) {
     res.setEncoding('utf8');
     var chunks = [];
