@@ -6,6 +6,7 @@
     "mongodb-bridge": "bin/mongodb-bridge.js"
   },
   "scripts": {
+    "start": "bin/mongodb-bridge.js",
     "dist": "lone --release"
   },
   "keywords": [
