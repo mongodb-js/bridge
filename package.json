@@ -15,11 +15,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/imlucas/mongodb-bridge.git"
+    "url": "http://github.com/mongodb-js/bridge.git"
   },
   "author": "Lucas Hrabovsky <hrabovsky.lucas@gmail.com> (http://imlucas.com)",
   "license": "MIT",
-  "homepage": "http://github.com/imlucas/mongodb-bridge",
+  "homepage": "http://github.com/mongodb-js/bridge",
   "devDependencies": {
     "lone": "^0.2.0"
   },
