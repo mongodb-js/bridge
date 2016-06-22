@@ -1,6 +1,6 @@
 # mongodb-bridge
 
-[![build status](https://secure.travis-ci.org/imlucas/mongodb-bridge.png)](http://travis-ci.org/imlucas/mongodb-bridge)
+[![build status](https://travis-ci.org/mongodb-js/bridge.svg?branch=master)](http://travis-ci.org/mongodb-js/bridge)
 
 Make weird network stuff reproducable, particularly handy when testing
 and distributed system that needs to handle these kinds of things.
