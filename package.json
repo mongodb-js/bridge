@@ -21,7 +21,7 @@
   "license": "MIT",
   "homepage": "http://github.com/mongodb-js/bridge",
   "devDependencies": {
-    "lone": "^0.4.2"
+    "lone": "^0.5.0"
   },
   "dependencies": {
     "debug": "^2.3.2",
