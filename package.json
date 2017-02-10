@@ -24,7 +24,7 @@
     "lone": "^0.5.0"
   },
   "dependencies": {
-    "debug": "^2.3.2",
+    "debug": "^2.6.1",
     "yargs": "^6.3.0"
   }
 }
