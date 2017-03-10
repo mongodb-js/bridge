@@ -25,6 +25,6 @@
   },
   "dependencies": {
     "debug": "^2.3.2",
-    "yargs": "^6.3.0"
+    "yargs": "^7.0.2"
   }
 }
